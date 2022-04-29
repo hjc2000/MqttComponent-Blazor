@@ -16,7 +16,7 @@
 
 ```
 ## 使用示例
-```c#
+```blazor
 @page "/"
 @using BlazorApp1.MqttComponent
 @using static BlazorApp1.MqttComponent.Mqtt
