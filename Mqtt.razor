@@ -1,0 +1,69 @@
+﻿@inject IJSRuntime JS
+
+@code {
+	public struct MqttOptions
+	{
+		public string _username;
+		public string _password;
+	}
+	public struct Msg
+	{
+		public string _topic;
+		public byte[] _payload;
+	}
+	//参数
+	[Parameter]
+	public MqttOptions Options { get; set; }
+	//事件
+	[Parameter]
+	public EventCallback OnConnectedCallback{ get; set; }
+	[Parameter]
+	public EventCallback<Msg> OnReceivedCallback{ get; set; }
+
+	[JSInvokable]
+	public async void OnConnected()
+	{
+		await OnConnectedCallback.InvokeAsync();
+	}
+	[JSInvokable]
+	public async void OnReceived(string topic,byte[] payload)
+	{
+		await OnReceivedCallback.InvokeAsync(new Msg()
+			{
+				_topic = topic,
+				_payload = payload,
+			});
+	}
+	[JSInvokable]
+	public async void OnInstalled()
+	{
+		if(module is not null)
+			_mqtt = await module.InvokeAsync<IJSObjectReference>("getMqtt",_dotnetHelper,Options._username,Options._password);
+
+	}
+	//提供给父组件的方法
+	public async void Publish(string topic,byte[] payload)
+	{
+		if(_mqtt is not null)
+			await _mqtt.InvokeVoidAsync("publish", topic, payload);
+	}
+	public async void Subscribe(string topic)
+	{
+		if(_mqtt is not null)
+			await _mqtt.InvokeVoidAsync("subscribe", topic);
+	}
+
+	IJSObjectReference? module;
+	IJSObjectReference? _mqtt;
+	DotNetObjectReference<Mqtt>? _dotnetHelper;
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+		if (firstRender)
+		{
+			module = await JS.InvokeAsync<IJSObjectReference>("import", "./MqttComponent/Mqtt.razor.js");
+			_dotnetHelper = DotNetObjectReference.Create(this);
+			await module.InvokeVoidAsync("installMqtt",_dotnetHelper);
+		}
+	}
+
+}
