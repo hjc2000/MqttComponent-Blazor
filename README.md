@@ -10,11 +10,12 @@
 
 ## 包含命名空间
 项目名称为 BlazorApp1，该组件被放在项目根文件夹中的 MqttComponent 文件夹中，则需要包含以下两个命名空间
-```c#
+```razor
 @using BlazorApp1.MqttComponent
 @using static BlazorApp1.MqttComponent.Mqtt
 
 ```
+
 ## 使用示例
 ```razor
 @page "/"
