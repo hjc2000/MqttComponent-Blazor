@@ -50,7 +50,7 @@
 }
 
 export function getMqtt(dotnetHelper) {
-    return new Mqtt(dotnetHelper, "hjcWebApp", "123456");
+    return new Mqtt(dotnetHelper, "hjc", "123456");
 }
 
 /**
@@ -59,7 +59,8 @@ export function getMqtt(dotnetHelper) {
  */
 export function installMqtt(dotnetHelper) {
     let script = document.createElement('script');
-    script.src = "https://unpkg.com/mqtt/dist/mqtt.min.js";
+    //script.src = "https://unpkg.com/mqtt/dist/mqtt.min.js";
+    script.src = "/js/mqtt.min.js";
     script.async = true;
     script.onload = () => {
         dotnetHelper.invokeMethodAsync("OnInstalled");
