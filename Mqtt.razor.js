@@ -58,12 +58,17 @@ export function getMqtt(dotnetHelper) {
  * @param {any} dotnetHelper
  */
 export function installMqtt(dotnetHelper) {
-    let script = document.createElement('script');
-    //script.src = "https://unpkg.com/mqtt/dist/mqtt.min.js";
-    script.src = "/js/mqtt.min.js";
-    script.async = true;
-    script.onload = () => {
+    if (window.mqttInstalled === true) {
         dotnetHelper.invokeMethodAsync("OnInstalled");
+    } else {
+        let script = document.createElement('script');
+        //script.src = "https://unpkg.com/mqtt/dist/mqtt.min.js";
+        script.src = "/js/mqtt.min.js";
+        script.async = true;
+        script.onload = () => {
+            dotnetHelper.invokeMethodAsync("OnInstalled");
+        }
+        document.head.append(script);
+        window.mqttInstalled = true;
     }
-    document.head.append(script);
 }
