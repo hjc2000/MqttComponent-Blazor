@@ -7,7 +7,6 @@
      */
     constructor(dotnetHelper, username, password)
     {
-        console.log(password);
         let options = {
             // Clean session
             clean: true,
@@ -51,7 +50,6 @@
             this.dotnetHelper.invokeMethodAsync("OnReceived", topic, payload);
         });
     }
-
     /**
      * 发布主题
      * @param {string} topic
@@ -61,7 +59,10 @@
     {
         this.client.publish(topic, payload);
     };
-
+    /**
+     * 订阅主题
+     * @param {any} topic
+     */
     subscribe(topic)
     {
         this.client.subscribe(topic, (error, granted) =>
@@ -69,12 +70,14 @@
             if (error)
             {
                 console.log(error);
-            } else
+			}
+			else
             {
                 console.log("订阅了" + granted[0].topic);
             }
         });
     }
+
 }
 
 export function getMqtt(dotnetHelper, username, password)
@@ -91,7 +94,8 @@ export function installMqtt(dotnetHelper)
     if (window.mqttInstalled === true)
     {
         dotnetHelper.invokeMethodAsync("OnInstalled");
-    } else
+    }
+    else
     {
         let script = document.createElement('script');
         //script.src = "https://unpkg.com/mqtt/dist/mqtt.min.js";
