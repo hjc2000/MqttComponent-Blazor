@@ -40,8 +40,10 @@ namespace BlazorApp1.MqttComponent
 		//参数
 		[Parameter]
 		public MqttOptions? Options { get; set; }
-		[Parameter]
-		public MqttOptions DefaultOptions
+		/// <summary>
+		/// MQTT组件的默认配置
+		/// </summary>
+		public static MqttOptions DefaultOptions
 		{
 			get
 			{
@@ -52,15 +54,13 @@ namespace BlazorApp1.MqttComponent
 				_defaultOptions = value;
 			}
 		}
-		public static MqttOptions _defaultOptions = new();
+		static MqttOptions _defaultOptions = new();
 
 		//事件
 		[Parameter]
 		public EventCallback OnConnectedCallback { get; set; }
 		[Parameter]
 		public EventCallback<Msg> OnReceivedCallback { get; set; }
-		[Parameter]
-		public EventCallback OnInstalledCallback { get; set; }
 		[Parameter]
 		public EventCallback OnConnectFailCallback { get; set; }
 
@@ -91,10 +91,11 @@ namespace BlazorApp1.MqttComponent
 		/// mqtt.js安装成功
 		/// </summary>
 		[JSInvokable]
-		public async void OnInstalled()
+		public void OnInstalled()
 		{
-			await OnInstalledCallback.InvokeAsync();
+			_installed = true;
 		}
+		bool _installed = false;
 		/// <summary>
 		/// 连接失败
 		/// </summary>
@@ -133,7 +134,12 @@ namespace BlazorApp1.MqttComponent
 		/// </summary>
 		public async void TryConnect()
 		{
-			if (module is not null)
+			//等待安装成功
+			while (!_installed)
+			{
+				await Task.Delay(1000);
+			}
+			if (module != null)
 			{
 				//如果用户没有设置 Options 则使用默认的设置
 				if (Options == null)
@@ -145,10 +151,9 @@ namespace BlazorApp1.MqttComponent
 					_mqtt = await module.InvokeAsync<IJSObjectReference>("getMqtt", _dotnetHelper, Options.Username, Options.Password);
 				}
 			}
-
 		}
 
-		//类字段
+		//生命周期
 		IJSObjectReference? module;
 		IJSObjectReference? _mqtt;
 		DotNetObjectReference<Mqtt>? _dotnetHelper;
