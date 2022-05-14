@@ -5,36 +5,19 @@ namespace BlazorApp1.MqttComponent
 {
 	public partial class Mqtt
 	{
+		[Inject]
+		IJSRuntime? JS { get; set; }
+
 		//数据类型
 		public class MqttOptions
 		{
-			string _username = "";
-			string _password = "";
-			public string Username
-			{
-				get { return _username; }
-				set { _username = value; }
-			}
-			public string Password
-			{
-				get { return _password; }
-				set { _password = value; }
-			}
+			public string Username { get; set; } = string.Empty;
+			public string Password { get; set; } = string.Empty;
 		}
 		public class Msg
 		{
-			string _topic = "";
-			byte[] _payload = Array.Empty<byte>();
-			public string Topic
-			{
-				get { return _topic; }
-				set { _topic = value; }
-			}
-			public byte[] Payload
-			{
-				get { return _payload; }
-				set { _payload = value; }
-			}
+			public string Topic { get; set; } = string.Empty;
+			public byte[] Payload { get; set; } = Array.Empty<byte>();
 		}
 
 		//参数
@@ -88,15 +71,6 @@ namespace BlazorApp1.MqttComponent
 			});
 		}
 		/// <summary>
-		/// mqtt.js安装成功
-		/// </summary>
-		[JSInvokable]
-		public void OnInstalled()
-		{
-			_installed = true;
-		}
-		bool _installed = false;
-		/// <summary>
 		/// 连接失败
 		/// </summary>
 		[JSInvokable]
@@ -134,23 +108,43 @@ namespace BlazorApp1.MqttComponent
 		/// </summary>
 		public async void TryConnect()
 		{
+			string clientId = DefaultOptions.Username + "-" + Guid.NewGuid().ToString();
 			//等待安装成功
-			while (!_installed)
+			var tryConnect = async Task<bool> () =>
+			  {
+				  try
+				  {
+					  if (module != null)
+					  {
+						  Console.WriteLine("moudle不为空，尝试连接");
+						  //如果用户没有设置 Options 则使用默认的设置
+						  if (Options == null)
+						  {
+							  _mqtt = await module.InvokeAsync<IJSObjectReference>("getMqtt", _dotnetHelper, DefaultOptions.Username, DefaultOptions.Password, clientId);
+						  }
+						  else
+						  {
+							  _mqtt = await module.InvokeAsync<IJSObjectReference>("getMqtt", _dotnetHelper, Options.Username, Options.Password, clientId);
+						  }
+						  return true;
+					  }
+					  else
+					  {
+						  Console.WriteLine("moudle为空");
+						  return false;
+					  }
+				  }
+				  catch
+				  {
+					  Console.WriteLine("异常");
+					  return false;
+				  }
+			  };
+			while (!await tryConnect())
 			{
 				await Task.Delay(1000);
 			}
-			if (module != null)
-			{
-				//如果用户没有设置 Options 则使用默认的设置
-				if (Options == null)
-				{
-					_mqtt = await module.InvokeAsync<IJSObjectReference>("getMqtt", _dotnetHelper, DefaultOptions.Username, DefaultOptions.Password);
-				}
-				else
-				{
-					_mqtt = await module.InvokeAsync<IJSObjectReference>("getMqtt", _dotnetHelper, Options.Username, Options.Password);
-				}
-			}
+
 		}
 
 		//生命周期
@@ -166,9 +160,14 @@ namespace BlazorApp1.MqttComponent
 		{
 			if (firstRender)
 			{
+				while (JS == null)
+				{
+					await Task.Delay(1000);
+				}
+				Console.WriteLine("MQTT组件已加载");
 				module = await JS.InvokeAsync<IJSObjectReference>("import", "./MqttComponent/Mqtt.razor.js");
 				_dotnetHelper = DotNetObjectReference.Create(this);
-				await module.InvokeVoidAsync("installMqtt", _dotnetHelper);
+				TryConnect();
 			}
 		}
 
